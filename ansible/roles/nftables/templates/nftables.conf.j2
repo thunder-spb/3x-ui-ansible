@@ -1,0 +1,58 @@
+#!/usr/sbin/nft -f
+
+delete table netdev filter
+delete table inet filter
+
+add table netdev filter
+add table inet filter
+
+table netdev filter {
+  chain ingress {
+    type filter hook ingress device "{{ ansible_default_ipv4.interface }}" priority -5; policy accept;
+
+    # UI Panel (only whitelisted IP)
+    tcp dport 2020 ip saddr { {{ allow_panel_ip }} } accept;
+    tcp dport 2053 ip saddr { {{ allow_panel_ip }} } accept;
+
+    tcp dport 2020 counter drop; # drop panel acces for everyone else
+    tcp dport 2053 counter drop; # drop direct panel acces for everyone else
+  }
+}
+table inet filter {
+
+  ## Precreate blacklist for fail2ban
+  add set inet filter blacklist { type ipv4_addr; flags dynamic,timeout }
+
+  chain input {
+    type filter hook input priority filter +5; policy drop;
+
+    # Basic rules
+    ct state established,related accept;
+    meta l4proto icmp accept;
+
+    # SSH
+    tcp dport 22 accept;
+
+    # DNS
+    tcp dport 53 accept;
+    udp dport 53 accept;
+
+    # UI panel from bridge interface
+    iifname "br-*" tcp dport 2020 accept;
+
+    # WireGuard limit new connections
+    udp dport {{ wg_port | default(51820) }} ct state new limit rate 20/second accept
+    udp dport {{ wg_port | default(51820) }} ct state new drop
+    udp dport {{ wg_port | default(51820) }} ct state established,related accept
+
+    # TCP sanity checks (anti-scan / invalid flags)
+    tcp flags & (fin|syn|rst|psh|ack|urg) == 0 drop;                          # NULL scan
+    tcp flags & (fin|syn|rst|psh|ack|urg) == (fin|syn|rst|psh|ack|urg) drop;  # XMAS scan
+    tcp flags syn|fin syn|fin == syn|fin drop;
+    tcp flags syn|rst syn|rst == syn|rst drop;
+    tcp flags fin|rst fin|rst == fin|rst drop;
+    tcp flags ack|fin fin == fin drop;
+    tcp flags ack|psh psh == psh drop;
+    tcp flags ack|urg urg == urg drop;
+  }
+}

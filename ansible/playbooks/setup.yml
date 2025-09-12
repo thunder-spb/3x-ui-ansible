@@ -1,0 +1,67 @@
+---
+- name: Initial Setup
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Update package cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Remove ufw
+      ansible.builtin.apt:
+        name: ufw
+        state: absent
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - nftables
+          - fail2ban
+          - python3-pip
+
+    - name: Install required python modules
+      ansible.builtin.apt:
+        name:
+          - python3-pytest
+          - python3-docker
+          # - python3-docker-compose
+
+    - name: Add the tcp_bbr module and make sure it is loaded after reboots
+      community.general.modprobe:
+        name: tcp_bbr
+        state: present
+        persistent: present
+
+    - name: Configure net.core.default_qdisc
+      ansible.posix.sysctl:
+        name: net.core.default_qdisc
+        value: 'fq'
+
+    - name: Configure net.ipv4.tcp_congestion_control
+      ansible.posix.sysctl:
+        name: net.ipv4.tcp_congestion_control
+        value: 'bbr'
+
+    - name: Configure net.core.rmem_max
+      ansible.posix.sysctl:
+        name: net.core.rmem_max
+        value: '16777216'
+
+    - name: Configure net.core.wmem_max
+      ansible.posix.sysctl:
+        name: net.core.wmem_max
+        value: '16777216'
+
+    - name: Configure OpenSSH Server
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin prohibit-password'
+      notify: Reload ssh
+
+  handlers:
+    - name: Reload ssh
+      ansible.builtin.service:
+        name: ssh
+        state: reloaded

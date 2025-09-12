@@ -1,0 +1,24 @@
+---
+- name: Wait
+  ansible.builtin.pause:
+    seconds: 5
+
+- name: Restart 3x-ui container
+  become: true
+  community.docker.docker_compose_v2:
+    timeout: "{{ docker_container_restart_timeout | d(300) }}"
+    project_src: /etc/docker-compose/proxy/
+    state: restarted
+    project_name: "{{ mysql_compose_project }}"
+    services: 3x-ui
+  notify: Wait
+
+- name: Restart caddy container
+  become: true
+  community.docker.docker_compose_v2:
+    timeout: "{{ docker_container_restart_timeout | d(300) }}"
+    project_src: /etc/docker-compose/{{ role_name }}/
+    state: restarted
+    project_name: "{{ mysql_compose_project }}"
+    services: caddy
+  notify: Wait

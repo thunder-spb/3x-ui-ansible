@@ -1,0 +1,21 @@
+---
+- name: Initial setup
+  import_playbook: playbooks/setup.yml
+
+- name: Configure nftables
+  hosts: all
+  become: true
+  tags: [nftables]
+  roles:
+    - nftables
+
+- name: Install Docker CE
+  tags: [docker]
+  import_playbook: playbooks/docker.yml
+
+- name: Deploy proxy
+  hosts: all
+  become: true
+  tags: [proxy]
+  roles:
+    - proxy

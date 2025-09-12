@@ -1,0 +1,43 @@
+---
+- name: Create directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ containers_basedir }}/{{ item.path }}"
+    state: directory
+    owner: "{{ item.user }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.acl }}"
+  loop:
+    - {path: "ui", user: "root", group: "root", acl: "0755"}
+    - {path: "ui/db", user: "root", group: "root", acl: "0755"}
+    - {path: "caddy", user: "root", group: "root", acl: "0755"}
+    - {path: "caddy/data", user: "root", group: "root", acl: "0755"}
+
+- name: Docker compose directory is present
+  become: true
+  ansible.builtin.file:
+    path: /etc/docker-compose/{{ role_name }}
+    state: directory
+    mode: "0750"
+
+- name: Docker compose file
+  become: true
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /etc/docker-compose/{{ role_name }}/docker-compose.yml
+    mode: "0640"
+
+- name: Run the containers
+  become: true
+  community.docker.docker_compose_v2:
+    timeout: 300
+    project_src: /etc/docker-compose/{{ role_name }}/
+    pull: always
+    build: never
+    state: present
+    project_name: "{{ proxy_compose_project }}"
+  register: proxy_docker_results
+  until: proxy_docker_results is success
+  retries: "{{ proxy_compose_retries }}"
+  delay: "{{ proxy_compose_retries_delay_sec }}"
+  notify: Wait

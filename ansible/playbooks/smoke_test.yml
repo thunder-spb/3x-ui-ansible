@@ -1,0 +1,10 @@
+---
+- name: Initial Setup
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Run tests
+      ansible.builtin.script:
+        cmd: tests/smoke.py
+        executable: /usr/local/bin/pytest
