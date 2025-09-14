@@ -45,7 +45,7 @@ table inet filter {
     udp dport {{ wg_port | default(51820) }} ct state new drop
     udp dport {{ wg_port | default(51820) }} ct state established,related accept
 
-    # TCP sanity checks (anti-scan / invalid flags)
+    {% comment %} # TCP sanity checks (anti-scan / invalid flags)
     tcp flags & (fin|syn|rst|psh|ack|urg) == 0 drop;                          # NULL scan
     tcp flags & (fin|syn|rst|psh|ack|urg) == (fin|syn|rst|psh|ack|urg) drop;  # XMAS scan
     tcp flags syn|fin syn|fin == syn|fin drop;
@@ -53,6 +53,6 @@ table inet filter {
     tcp flags fin|rst fin|rst == fin|rst drop;
     tcp flags ack|fin fin == fin drop;
     tcp flags ack|psh psh == psh drop;
-    tcp flags ack|urg urg == urg drop;
+    tcp flags ack|urg urg == urg drop; {% endcomment %}
   }
 }
