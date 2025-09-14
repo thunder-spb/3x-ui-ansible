@@ -2,7 +2,7 @@
 all:
   hosts:
     proxy-1:
-      ansible_host: wg-cz.thunder.su
+      ansible_host: DNS_A_RECORD
       ansible_user: ansible
 
 proxy:
@@ -10,7 +10,8 @@ proxy:
     proxy-1:
   vars:
     containers_basedir: /srv/{{ role_name }}
-    proxy_ui_version: v2.4.4
+    proxy_ui_version: v2.7.0
     proxy_caddy_version: 2.8-alpine
-    proxy_domain_name: wg-cz.thunder.su
-    allow_panel_ip: 89.253.238.228
+    proxy_domain_name: DNS_A_RECORD
+    allow_panel_ip: IP_ADDRESS_FOR_NFTABLES
+    wg_port: 51820
