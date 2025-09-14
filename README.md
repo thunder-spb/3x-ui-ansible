@@ -23,7 +23,18 @@ This is an ansible configuration for quick 3x-ui installation.
 
 ## How to use
 
-### Commands for server configuration
+### General requirements
+
+* domain name with a DNS A record
+
+### Server requirements
+
+* Ubuntu 22.04
+* Default SSH port is 22 and it's open
+* User `ansible` with full passwordless sudo
+* Public SSH key is added for user `ansible`
+
+### Commands for remote server configuration
 ```
 sudo useradd -m -s /bin/bash ansible
 sudo echo 'ansible ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/ansible
@@ -36,14 +47,15 @@ sudo chmod 600 /home/ansible/.ssh/authorized_keys
 ### Step by step guide to use manually
 
 * clone the repo
-* change inventory.yml
+* copy `ansible/inventory.example.yml` to `ansible/inventory.yml`
+* update `ansible/inventory.yml`
 * run deploy playbook
 
 #### inventory.yml settings to change
 
-* ansible_host
-* proxy_domain_name
-* allowed_ip
+* `ansible_host`
+* `proxy_domain_name`
+* `allowed_ip`
 
 #### Command to run manually
 
@@ -55,20 +67,10 @@ ansible-playbook --private-key ~/.ssh/ansible --inventory inventory.yml main.yml
 
 ### How to access the UI panel
 
-* http://PROXY_HOST:2053/ (accessible only from ALLOW_IP)
-* https://PROXY_DOMAIN:2020/ (accessible only from ALLOW_IP and self)
+* `http://PROXY_HOST:2053/` (accessible only from ALLOW_IP)
+* `https://PROXY_DOMAIN:2020/` (accessible only from ALLOW_IP and self)
 
-Default user:password is admin:admin.
+Default user:password is `admin`:`admin`.
 
-### General requirements
-
-* domain name with a DNS A record
-
-### Server requirements
-
-* Ubuntu 22.04
-* Default SSH port is 22 and it's open
-* User "ansible" with full passwordless sudo
-* Public SSH key is added for user "ansible"
 
 
